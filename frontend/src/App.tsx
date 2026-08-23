@@ -1,6 +1,5 @@
 import React from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
-import { GoogleOAuthProvider } from "@react-oauth/google";
 import { AuthProvider } from "@/lib/authContext";
 import { ProtectedRoute } from "@/components/finex/ProtectedRoute";
 import { LandingPage } from "@/pages/LandingPage";
@@ -22,13 +21,10 @@ import { AdminPage } from "@/pages/AdminPage";
 import { PrivacyPage } from "@/pages/PrivacyPage";
 import { TermsPage } from "@/pages/TermsPage";
 
-const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || "333830843232-example.apps.googleusercontent.com";
-
 export function App() {
   return (
-    <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
-      <AuthProvider>
-        <Routes>
+    <AuthProvider>
+      <Routes>
         {/* Public Landing, Legal & Authentication */}
         <Route path="/" element={<LandingPage />} />
         <Route path="/privacy" element={<PrivacyPage />} />
@@ -60,6 +56,5 @@ export function App() {
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </AuthProvider>
-    </GoogleOAuthProvider>
   );
 }
