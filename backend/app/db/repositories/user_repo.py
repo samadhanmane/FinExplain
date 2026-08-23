@@ -179,12 +179,7 @@ def get_all_users(limit: int = 50, offset: int = 0, search: Optional[str] = None
     if not supabase:
         return []
     try:
-        query = supabase.table("users").select("id, email, full_name, created_at, updated_at")
-        try:
-            query = supabase.table("users").select("id, email, full_name, role, created_at, updated_at")
-        except Exception:
-            pass
-
+        query = supabase.table("users").select("id, email, full_name, role, created_at, updated_at")
         if search:
             query = query.or_(f"email.ilike.%{search}%,full_name.ilike.%{search}%")
 
@@ -193,13 +188,15 @@ def get_all_users(limit: int = 50, offset: int = 0, search: Optional[str] = None
         users = res.data or []
 
         for u in users:
+            email = (u.get("email") or "").lower().strip()
             if not u.get("role"):
-                email = u.get("email", "").lower().strip()
-                u["role"] = "admin" if (email == admin_email or email in ADMIN_EMAILS) else "user"
+                u["role"] = "admin" if email == admin_email else "user"
+            elif email == admin_email:
+                u["role"] = "admin"
 
         return users
     except Exception as e:
-        logger.error(f"Error fetching all users: {e}")
+        logger.error(f"Error fetching all users with role: {e}")
         try:
             query = supabase.table("users").select("id, email, full_name, created_at, updated_at")
             if search:
@@ -208,8 +205,8 @@ def get_all_users(limit: int = 50, offset: int = 0, search: Optional[str] = None
             res = query.execute()
             users = res.data or []
             for u in users:
-                email = u.get("email", "").lower().strip()
-                u["role"] = "admin" if email in ADMIN_EMAILS else "user"
+                email = (u.get("email") or "").lower().strip()
+                u["role"] = "admin" if email == admin_email else "user"
             return users
         except Exception as e2:
             logger.error(f"Error fetching users (fallback): {e2}")
