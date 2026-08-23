@@ -47,7 +47,7 @@ export function ProductsPage() {
     });
   };
 
-  const products = productsQuery.data || [];
+  const products = Array.isArray(productsQuery.data) ? productsQuery.data : [];
 
   return (
     <div className="space-y-8">

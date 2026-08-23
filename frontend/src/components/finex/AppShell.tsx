@@ -92,19 +92,19 @@ function UserAvatar({
 }) {
   const [imgError, setImgError] = useState(false);
 
-  const displayName = user?.name || user?.email?.split("@")[0] || "User";
+  const displayName = (typeof user?.name === "string" && user.name) || (typeof user?.email === "string" && user.email.split("@")[0]) || "User";
   const initials = (() => {
-    if (user?.name) {
+    if (typeof user?.name === "string" && user.name.trim()) {
       const parts = user.name.trim().split(/\s+/);
-      if (parts.length >= 2) {
+      if (parts.length >= 2 && parts[0] && parts[parts.length - 1]) {
         return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
       }
       return user.name.slice(0, 2).toUpperCase();
     }
-    if (user?.email) {
+    if (typeof user?.email === "string" && user.email.trim()) {
       return user.email.slice(0, 2).toUpperCase();
     }
-    return "U";
+    return "FA";
   })();
 
   const sizeClasses = {

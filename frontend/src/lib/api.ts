@@ -292,7 +292,17 @@ export const api = {
   health: () => request<HealthResponse>("/health"),
 
   // Products
-  listProducts: () => request<Product[]>("/api/v1/products/"),
+  listProducts: async (): Promise<Product[]> => {
+    try {
+      const res = await request<any>("/api/v1/products/");
+      if (Array.isArray(res)) return res as Product[];
+      if (res && Array.isArray(res.products)) return res.products as Product[];
+      return [];
+    } catch (err) {
+      console.warn("Failed to fetch products:", err);
+      return [];
+    }
+  },
   getProduct: (id: string) => request<Product>(`/api/v1/products/${id}`),
   createProduct: (data: Partial<Product>) =>
     request<Product>("/api/v1/products/", {
@@ -315,7 +325,17 @@ export const api = {
       body: formData,
     });
   },
-  listDocuments: () => request<any[]>("/api/v1/documents/"),
+  listDocuments: async (): Promise<any[]> => {
+    try {
+      const res = await request<any>("/api/v1/documents/");
+      if (Array.isArray(res)) return res;
+      if (res && Array.isArray(res.documents)) return res.documents;
+      return [];
+    } catch (err) {
+      console.warn("Failed to fetch documents:", err);
+      return [];
+    }
+  },
   deleteDocument: (id: string) =>
     request<{ message: string }>(`/api/v1/documents/${id}`, {
       method: "DELETE",

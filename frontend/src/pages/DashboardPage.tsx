@@ -12,9 +12,11 @@ export function DashboardPage() {
     queryFn: api.listProducts,
   });
 
-  const docs = listDocuments();
-  const products = productsQuery.data || [];
-  const sessions = loadChatSessions();
+  const rawDocs = listDocuments();
+  const docs = Array.isArray(rawDocs) ? rawDocs : [];
+  const products = Array.isArray(productsQuery.data) ? productsQuery.data : [];
+  const rawSessions = loadChatSessions();
+  const sessions = Array.isArray(rawSessions) ? rawSessions : [];
   const totalChunks = docs.reduce((acc, d) => acc + (d.chunks || 0), 0);
   const totalQueries = sessions.reduce(
     (acc, s) => acc + (s.messages || []).filter((m) => m.role === "user").length,
