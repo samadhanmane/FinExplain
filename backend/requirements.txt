@@ -1,76 +1,64 @@
 # ==============================================
 # WEB FRAMEWORK & SERVER
 # ==============================================
-fastapi==0.115.6
-uvicorn[standard]==0.34.0
-python-multipart==0.0.20
+fastapi>=0.115.0,<0.116.0
+uvicorn[standard]>=0.30.0
+python-multipart>=0.0.18
 
 # ==============================================
 # CONFIGURATION & ENVIRONMENT
 # ==============================================
-pydantic==2.10.4
-pydantic-settings==2.7.0
-pydantic_core==2.27.2
-python-dotenv==1.0.1
-typing-extensions==4.16.0
+pydantic>=2.8.0,<3.0.0
+pydantic-settings>=2.6.0
+python-dotenv>=1.0.1
+typing-extensions>=4.12.0
 
 # ==============================================
 # DATABASE (Supabase PostgreSQL)
 # ==============================================
-supabase==2.11.0
-postgrest==0.19.3
-gotrue==2.12.4
-psycopg2-binary==2.9.10
+supabase>=2.10.0
+postgrest>=0.19.0
+psycopg2-binary>=2.9.9
 
 # ==============================================
 # VECTOR DATABASE (Pinecone)
 # ==============================================
-pinecone-client==5.0.1
+pinecone-client>=5.0.0
 
 # ==============================================
-# LLM ENGINE (Google Gemini via LangChain / GenAI)
+# EMBEDDINGS & RERANKING (PyTorch / SentenceTransformers)
 # ==============================================
-google-generativeai==0.8.6
-google-genai==2.19.0
-langchain==0.3.15
-langchain-core==1.6.0
-langchain-community==0.3.15
-langchain-google-genai==2.1.12
-
-# ==============================================
-# EMBEDDINGS & RERANKING (Hugging Face / PyTorch)
-# ==============================================
-sentence-transformers==3.3.1
-transformers==4.47.1
-torch==2.5.1
-numpy==1.26.4
-huggingface-hub==0.36.2
-safetensors==0.8.0
-scikit-learn==1.9.0
+sentence-transformers>=3.3.0
+transformers>=4.46.0
+torch>=2.4.0
+numpy>=1.26.0
+huggingface-hub>=0.26.0
+safetensors>=0.4.5
+scikit-learn>=1.5.0
 
 # ==============================================
 # DOCUMENT PROCESSING (PDF) & REPORTING
 # ==============================================
-PyMuPDF==1.24.14
-reportlab==5.0.1
-pypdf==5.1.0
+PyMuPDF>=1.24.10
+reportlab>=4.0.0
+pypdf>=5.0.0
 
 # ==============================================
 # CACHING & BACKGROUND TASKS
 # ==============================================
-redis==5.2.1
-celery==5.4.0
+redis>=5.0.0
+celery>=5.4.0
 
 # ==============================================
 # HTTP CLIENT & SECURITY
 # ==============================================
-requests==2.34.2
-httpx==0.28.1
-PyJWT==2.13.0
-cryptography==50.0.0
+requests>=2.32.0
+httpx>=0.27.0
+PyJWT>=2.9.0
+cryptography>=43.0.0
 
 # ==============================================
 # TESTING
 # ==============================================
-pytest==8.3.4
-pytest-asyncio==0.25.2
+pytest>=8.3.0
+pytest-asyncio>=0.24.0
