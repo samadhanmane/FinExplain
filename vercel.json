@@ -1,7 +1,13 @@
 {
-  "buildCommand": "cd frontend && npm install && npm run build",
-  "outputDirectory": "frontend/dist",
   "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "https://finexplain.onrender.com/api/:path*"
+    },
+    {
+      "source": "/health/:path*",
+      "destination": "https://finexplain.onrender.com/health/:path*"
+    },
     {
       "source": "/(.*)",
       "destination": "/index.html"
