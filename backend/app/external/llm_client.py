@@ -157,26 +157,9 @@ class LLMClient:
                     logger.error(f"[LLMClient] Non-retryable API key error: {e}")
                     raise e
 
-                # Fail fast on 404 — this is a configuration error, not transient
+                # Fail fast on 404
                 if "404" in err_str and "not found" in err_str:
-                    logger.error(
-                        f"[LLMClient] Model '{target_model}' not found (404). "
-                        f"Fix GEMINI_MODEL in backend/.env. Not retrying."
-                    )
-                    raise e
-
-                # A daily/project quota cannot recover within this request.
-                # Retrying it blocks the whole RAG query and can make a
-                # benchmark hang for several minutes without changing the
-                # outcome. Transient per-minute 429s still use backoff below.
-                if any(
-                    marker in err_str
-                    for marker in (
-                        "generaterequestsperday",
-                        "daily quota",
-                    )
-                ):
-                    logger.error(f"[LLMClient] Daily quota exhausted; failing fast: {e}")
+                    logger.error(f"[LLMClient] Model '{target_model}' not found (404).")
                     raise e
 
                 if attempt < self.max_retries:
@@ -191,11 +174,11 @@ class LLMClient:
                         sleep_time = self.initial_backoff * (2 ** attempt)
 
                     logger.warning(
-                        f"[LLMClient] Attempt {attempt + 1} failed: {e}. Retrying in {sleep_time:.1f}s..."
+                        f"[LLMClient] Attempt {attempt + 1} on '{target_model}' failed: {e}. Retrying in {sleep_time:.1f}s..."
                     )
                     time.sleep(sleep_time)
                 else:
-                    logger.error(f"[LLMClient] All {self.max_retries + 1} attempts failed: {e}")
+                    logger.error(f"[LLMClient] All {self.max_retries + 1} attempts on '{target_model}' failed: {e}")
 
         raise last_exception or RuntimeError(f"Gemini LLM request failed for model '{target_model}'.")
 

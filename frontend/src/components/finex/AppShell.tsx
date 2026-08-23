@@ -28,7 +28,7 @@ function NavList({ onNavigate }: { onNavigate?: () => void }) {
   const location = useLocation();
   const { user } = useAuth();
 
-  const isAdmin = user?.role === "admin" || user?.email?.toLowerCase().trim() === "samadhanmane2324@gmail.com";
+  const isAdmin = user?.role === "admin";
 
   const navItems = [
     ...NAV,

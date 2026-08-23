@@ -676,12 +676,21 @@ def did_abstain(answer: str) -> bool:
 
 
 def extract_claims(answer: str) -> List[str]:
-    sentences = re.split(r"[.!?]\s+|\n+", answer)
-    return [s.strip(" -*#") for s in sentences if len(s.strip(" -*#")) > 15]
+    raw_lines = [l.strip() for l in answer.split('\n') if l.strip()]
+    claims = []
+    for line in raw_lines:
+        if re.match(r'^(?:#+|-{3,}|\*+\s*Based\s+on|\b(?:Summary:?|Here\s+(?:is|are))\b)', line, re.I):
+            continue
+        sentences = re.split(r'(?<=[.!?])\s+(?=[A-Z0-9\[])', line)
+        for s in sentences:
+            s_clean = s.strip(" -*#`")
+            if len(s_clean) > 15 and not re.match(r'^(?:#+|\b(?:based\s+on\s+the|the\s+following\s+are)\b)', s_clean, re.I):
+                claims.append(s_clean)
+    return claims
 
 
 def has_citation_marker(claim: str) -> bool:
-    return bool(re.search(r"(?:\[?\s*page\s*\d+|section\s*[:\w.-]+)", claim, re.IGNORECASE))
+    return bool(re.search(r'(?:\[(?:.*?Page\s*|p\.\s*)\d+|\[Section\s*[^\]]+\]|Page\s+\d+|Section\s*[:\w.-]+)', claim, re.IGNORECASE))
 
 # ---------------------------------------------------------------------
 # SINGLE QUERY EVALUATION WITH CAUSAL CLASSIFICATION
@@ -708,6 +717,14 @@ def evaluate_case(case: Dict[str, Any], document_cfg: Dict[str, Any]) -> Dict[st
         chunks = []
     retrieval_ms = (time.perf_counter() - retrieval_start) * 1000
     retrieval_count = len(chunks)
+
+    # Requirement-level retrieval recall: did chunks contain the required terms?
+    req_patterns = ANSWER_REQUIREMENTS.get(case["id"], {})
+    req_retrieved_matches = []
+    for req_name, pats in req_patterns.items():
+        if any(any(re.search(p, (c.get("text") or ""), re.IGNORECASE) for p in pats) for c in chunks):
+            req_retrieved_matches.append(req_name)
+    req_retrieval_recall = len(req_retrieved_matches) / len(req_patterns) if req_patterns else 1.0
 
     # 2. End-to-End RAG Generation
     start = time.perf_counter()
@@ -787,7 +804,7 @@ def evaluate_case(case: Dict[str, Any], document_cfg: Dict[str, Any]) -> Dict[st
 
     print(f"Classification : [{classification}]", flush=True)
     print(f"Answer Preview : {answer[:130]}...", flush=True)
-    print(f"Tier: {processing_tier} | Latency: {latency_ms:.1f}ms | Score: {evidence_score} | Correct: {correctness == 1.0} | Required Recall: {required_eval['recall']*100:.0f}%", flush=True)
+    print(f"Tier: {processing_tier} | Latency: {latency_ms:.1f}ms | Score: {evidence_score} | Correct: {correctness == 1.0} | Req Recall: {required_eval['recall']*100:.0f}% | Ret Recall: {req_retrieval_recall*100:.0f}% | Cit Cov: {claim_citation_coverage*100:.0f}%", flush=True)
     if required_eval["missing_elements"]:
         print(f"Missing Required Elements: {', '.join(required_eval['missing_elements'])}", flush=True)
 
@@ -814,6 +831,8 @@ def evaluate_case(case: Dict[str, Any], document_cfg: Dict[str, Any]) -> Dict[st
         "claim_support": claim_citation_coverage,
         "claim_citation_coverage": claim_citation_coverage,
         "condition_recall": required_eval["recall"],
+        "requirement_retrieval_recall": req_retrieval_recall,
+        "requirement_generation_recall": required_eval["recall"],
         "legacy_condition_recall": condition_eval["overall_recall"],
         "condition_precision": condition_eval["overall_precision"],
         "condition_by_type": condition_eval["by_type"],
@@ -883,6 +902,8 @@ def main():
     relevancy = avg("relevancy")
     citation_accuracy = avg("citation_accuracy")
     condition_recall = avg("condition_recall")
+    requirement_retrieval_recall = avg("requirement_retrieval_recall")
+    requirement_generation_recall = avg("requirement_generation_recall")
     legacy_condition_recall = avg("legacy_condition_recall")
     condition_precision = avg("condition_precision")
     claim_citation_coverage = avg("claim_citation_coverage")
@@ -922,21 +943,19 @@ def main():
     print(f"  • Strict Answerable Completeness    : {strict_answerable_correctness * 100:.1f}% ({correct_count}/{len(info_present_queries)} answerable queries)", flush=True)
     print(f"  • Fully Complete Answers            : {correct_count}/{total} ({correct_count/total*100:.1f}%)", flush=True)
     
-    print("\n2. FAILURE BREAKDOWN CLASSIFICATION", flush=True)
+    print("\n2. REQUIREMENT-LEVEL RETRIEVAL & GENERATION DYNAMICS", flush=True)
+    print(f"  • Requirement-Level Retrieval Recall: {requirement_retrieval_recall * 100:.1f}% (sub-questions with retrieved evidence)", flush=True)
+    print(f"  • Requirement-Level Gen Recall      : {requirement_generation_recall * 100:.1f}% (sub-questions explicitly answered)", flush=True)
+    print(f"  • Claim Citation Coverage           : {claim_citation_coverage * 100:.1f}% (material claims with inline citations)", flush=True)
+    print(f"  • Citation Verification Rate        : {citation_accuracy * 100:.1f}% (verified against corpus chunks)", flush=True)
+
+    print("\n3. FAILURE BREAKDOWN CLASSIFICATION", flush=True)
     print(f"  • Correct Answers                   : {correct_count} ({correct_count/total*100:.1f}%)", flush=True)
     print(f"  • Document Limitations (Blank/Form) : {doc_insufficient_count} ({doc_insufficient_count/total*100:.1f}%)", flush=True)
     print(f"  • Actual Retrieval Failures         : {retrieval_failure_count} ({retrieval_failure_count/total*100:.1f}%)", flush=True)
     print(f"  • Generation / Routing Failures     : {gen_or_routing_failure_count} ({gen_or_routing_failure_count/total*100:.1f}%)", flush=True)
     print(f"  • Incomplete Answers                : {incomplete_answer_count} ({incomplete_answer_count/total*100:.1f}%)", flush=True)
     print(f"  • False Abstentions                 : {false_abstention_count} ({false_abstention_count/total*100:.1f}%)", flush=True)
-
-    print("\n3. GENERATION QUALITY & GROUNDING", flush=True)
-    print(f"  • Faithfulness                      : {faithfulness * 100:.1f}%", flush=True)
-    print(f"  • Claim Citation Coverage (proxy)   : {claim_citation_coverage * 100:.1f}%", flush=True)
-    print(f"  • Citation Verification Rate        : {citation_accuracy * 100:.1f}%", flush=True)
-    print(f"  • Citation Completeness (proxy)     : {citation_completeness * 100:.1f}%", flush=True)
-    print(f"  • Citation Metadata Presence        : {citation_metadata_presence * 100:.1f}%", flush=True)
-    print(f"  • Answer Relevancy                  : {relevancy * 100:.1f}%", flush=True)
 
     print("\n4. CONDITION PRESERVATION & GRANULAR TAXONOMY", flush=True)
     print(f"  • Required Element Recall           : {condition_recall * 100:.1f}%", flush=True)

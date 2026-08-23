@@ -27,6 +27,20 @@ export function SettingsPage() {
   const [currency, setCurrency] = useState("INR");
   const [profileSaved, setProfileSaved] = useState(false);
   const [copiedToken, setCopiedToken] = useState(false);
+  const [avatarError, setAvatarError] = useState(false);
+
+  useEffect(() => {
+    setAvatarError(false);
+  }, [user?.picture]);
+
+  const initials = (() => {
+    const name = displayName || user?.name || user?.email?.split("@")[0] || "User";
+    const parts = name.trim().split(/\s+/);
+    if (parts.length >= 2) {
+      return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+    }
+    return name.slice(0, 2).toUpperCase() || "U";
+  })();
 
   // Load User Preferences from LocalStorage on mount
   useEffect(() => {
@@ -121,11 +135,18 @@ export function SettingsPage() {
         {/* User Card Header */}
         <div className="flex flex-wrap items-center justify-between gap-4 border-b border-white/10 pb-6">
           <div className="flex items-center gap-4">
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-primary/30 to-white/10 border border-white/15 text-xl font-bold text-white shadow-inner">
-              {user?.picture ? (
-                <img src={user.picture} alt="Profile" className="h-full w-full rounded-2xl object-cover" />
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500/30 via-purple-600/30 to-violet-700/30 border border-white/20 text-lg font-bold text-white shadow-inner overflow-hidden shrink-0">
+              {user?.picture && !avatarError ? (
+                <img
+                  src={user.picture}
+                  alt={displayName}
+                  referrerPolicy="no-referrer"
+                  crossOrigin="anonymous"
+                  onError={() => setAvatarError(true)}
+                  className="h-full w-full rounded-2xl object-cover"
+                />
               ) : (
-                displayName.charAt(0).toUpperCase() || "U"
+                <span className="select-none tracking-wider text-white font-bold">{initials}</span>
               )}
             </div>
             <div>

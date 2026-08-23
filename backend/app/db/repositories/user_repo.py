@@ -6,8 +6,6 @@ import uuid
 
 logger = logging.getLogger(__name__)
 
-ADMIN_EMAILS = {"samadhanmane2324@gmail.com"}
-
 
 def ensure_user_exists(
     user_id: str,
@@ -130,7 +128,7 @@ def get_user_role(user_id: str, email: Optional[str] = None) -> str:
     from app.core.config import settings
     admin_email = settings.effective_admin_email
 
-    if email and (email.lower().strip() == admin_email or email.lower().strip() in ADMIN_EMAILS):
+    if email and email.lower().strip() == admin_email:
         return "admin"
 
     supabase = get_supabase_client()
@@ -143,7 +141,7 @@ def get_user_role(user_id: str, email: Optional[str] = None) -> str:
             if role:
                 return role
             user_email = res.data[0].get("email", "").lower().strip()
-            if user_email == admin_email or user_email in ADMIN_EMAILS:
+            if user_email == admin_email:
                 return "admin"
         return "user"
     except Exception as e:
@@ -152,7 +150,7 @@ def get_user_role(user_id: str, email: Optional[str] = None) -> str:
             res = supabase.table("users").select("id, email").eq("id", user_id).execute()
             if res.data and len(res.data) > 0:
                 user_email = res.data[0].get("email", "").lower().strip()
-                if user_email == admin_email or user_email in ADMIN_EMAILS:
+                if user_email == admin_email:
                     return "admin"
         except Exception:
             pass

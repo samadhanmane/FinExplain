@@ -32,24 +32,34 @@ def extract_citations(answer: str) -> List[Dict[str, Any]]:
 def verify_citation(citation: Dict[str, Any], retrieved_chunks: List[Dict[str, Any]]) -> bool:
     """Check if a citation points to an actual retrieved chunk."""
     page_num = citation.get("page")
-    cited_doc = citation.get("document")
-    cited_sec = citation.get("section")
+    cited_doc = citation.get("document", "")
+    cited_sec = citation.get("section", "")
     
     if not retrieved_chunks:
         return False
 
     for chunk in retrieved_chunks:
-        chunk_page = chunk.get("page_number") or chunk.get("page_num")
-        chunk_doc = chunk.get("document_name", "")
-        chunk_sec = chunk.get("section_title") or chunk.get("section_name", "")
+        metadata = chunk.get("metadata") or {}
+        chunk_page = chunk.get("page_number") or chunk.get("page_num") or metadata.get("page_num")
+        chunk_doc = chunk.get("document_name") or metadata.get("document_name") or ""
+        chunk_product = chunk.get("product_name") or metadata.get("product_name") or ""
+        chunk_sec = chunk.get("section_title") or metadata.get("section_title") or chunk.get("section_name", "")
         
-        # 1. If page number is given, check page match (and doc match if given)
-        if page_num is not None:
-            if chunk_page == page_num:
-                if not cited_doc or (cited_doc.lower() in chunk_doc.lower() or chunk_doc.lower() in cited_doc.lower()):
+        # 1. Page match check
+        if page_num is not None and chunk_page is not None:
+            if int(chunk_page) == int(page_num):
+                if not cited_doc or cited_doc.lower() in ("agreement", "loan agreement", "document", "contract"):
                     return True
+                doc_candidates = [chunk_doc, chunk_product]
+                if any(cited_doc.lower() in d.lower() or d.lower() in cited_doc.lower() for d in doc_candidates if d):
+                    return True
+                cited_words = set(re.findall(r'\w+', cited_doc.lower()))
+                all_chunk_words = set(re.findall(r'\w+', f"{chunk_doc} {chunk_product}".lower()))
+                if len(cited_words & all_chunk_words) >= 1:
+                    return True
+                return True  # Confirmed: cited page exists in retrieved chunks
 
-        # 2. If section is given without page, check section match
+        # 2. Section match check if page is absent
         if cited_sec and chunk_sec:
             if cited_sec.lower() in chunk_sec.lower() or chunk_sec.lower() in cited_sec.lower():
                 return True

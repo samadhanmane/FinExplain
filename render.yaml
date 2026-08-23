@@ -1,0 +1,61 @@
+# Render Infrastructure as Code (Blueprint Specification)
+# Docs: https://render.com/docs/blueprint-spec
+
+services:
+  # --------------------------------------------------------------------------
+  # FinExplain FastAPI Backend Web Service
+  # --------------------------------------------------------------------------
+  - type: web
+    name: finexplain-backend
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: starter
+    region: oregon
+    healthCheckPath: /health/live
+    autoDeploy: true
+    envVars:
+      - key: ENVIRONMENT
+        value: production
+      - key: LLM_PROVIDER
+        value: gemini
+      - key: GEMINI_MODEL
+        value: gemini-3.5-flash-lite
+      - key: GEMINI_API_KEY
+        sync: false # Set in Render Dashboard
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_KEY
+        sync: false
+      - key: DATABASE_URL
+        sync: false
+      - key: PINECONE_API_KEY
+        sync: false
+      - key: PINECONE_INDEX_NAME
+        value: finexplain
+      - key: JWT_SECRET_KEY
+        generateValue: true
+      - key: JWT_ALGORITHM
+        value: HS256
+      - key: ACCESS_TOKEN_EXPIRE_MINUTES
+        value: 1440
+      - key: ADMIN_EMAIL
+        value: admin@gmail.com
+      - key: ADMIN_PS
+        sync: false # Set your secure admin password in Render
+      - key: CORS_ORIGINS
+        value: "https://*.vercel.app,http://localhost:5173,http://localhost:3000"
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: finexplain-redis
+          property: connectionString
+
+  # --------------------------------------------------------------------------
+  # Redis L2 Cache Service
+  # --------------------------------------------------------------------------
+  - type: redis
+    name: finexplain-redis
+    plan: free
+    region: oregon
+    maxmemoryPolicy: allkeys-lru
+    ipAllowList: [] # Internal access only

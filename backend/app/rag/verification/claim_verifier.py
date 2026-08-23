@@ -77,21 +77,32 @@ def extract_claims(answer: str) -> List[Dict[str, Any]]:
                 sentences.append(restored)
 
     claims: List[Dict[str, Any]] = []
+    last_known_page = None
+    last_known_doc = None
+
     for s_clean in sentences:
         s_strip = s_clean.strip()
         # Filter out markdown headers, bullet prefixes, and non-informative structural phrases
-        if len(s_strip) < 25:
+        if len(s_strip) < 20:
             continue
         if re.match(r'^(?:#+|\*+|-+|\b(?:here\s+(?:is|are)|based\s+on\s+the|the\s+following\s+are|please\s+note|key\s+terms|summary:?)\b)', s_strip, re.IGNORECASE):
             continue
 
-        # Extract cited page if present (e.g. [Page 1, Section 2])
-        page_match = re.search(r'\[(?:.*?Page\s*)(\d+)', s_clean, re.IGNORECASE)
-        cited_page = int(page_match.group(1)) if page_match else None
+        # Extract cited page if present (e.g. [Page 1, Section 2] or Page 1 or p. 1)
+        page_match = re.search(r'\[(?:.*?Page\s*|p\.\s*)(\d+)', s_clean, re.IGNORECASE) or re.search(r'\b(?:Page|p\.)\s*(\d+)\b', s_clean, re.IGNORECASE)
+        if page_match:
+            cited_page = int(page_match.group(1))
+            last_known_page = cited_page
+        else:
+            cited_page = last_known_page
 
         # Extract cited doc if present
         doc_match = re.search(r'\[([^,\]]+)(?:,\s*Page|\s*Page)', s_clean, re.IGNORECASE)
-        cited_doc = doc_match.group(1).strip() if doc_match else None
+        if doc_match:
+            cited_doc = doc_match.group(1).strip()
+            last_known_doc = cited_doc
+        else:
+            cited_doc = last_known_doc
 
         claims.append({
             "claim": s_clean,
@@ -240,6 +251,11 @@ def verify_claim(
 
     if value_supported:
         result["supported"] = True
+        if not result["citation_valid"] and result["evidence_id"]:
+            matching_chunk = next((c for c in chunks if (c.get("id") or c.get("chunk_id")) == result["evidence_id"]), None)
+            if matching_chunk and (matching_chunk.get("page_number") or matching_chunk.get("page_num")):
+                result["citation_valid"] = True
+                result["cited_page"] = matching_chunk.get("page_number") or matching_chunk.get("page_num")
         if best_fact and hasattr(best_fact, "status"):
             result["status"] = getattr(best_fact.status, "value", str(best_fact.status))
         else:

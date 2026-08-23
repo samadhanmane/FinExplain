@@ -42,7 +42,7 @@ wheels/
 htmlcov/
 .nox/
 .tox/
-.
+
 # IDE & Editor files
 .vscode/
 .idea/
@@ -53,14 +53,26 @@ htmlcov/
 
 # Node & Frontend
 node_modules/
+frontend/node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .next/
 out/
+dist/
+frontend/dist/
 
 # Logs & Temporary files
 *.log
 logs/
 scratch/
 tmp/
+
+# Document & Report Assets Policy
+# Explicitly keep document test corpus and generated PDF reports
+!documents/
+!documents/**
+!reports/
+!reports/*.pdf
+# Ignore temporary rendered PNG previews
+reports/*.png

@@ -40,9 +40,10 @@ numpy>=1.24.0
 huggingface-hub>=0.26.0
 
 # ==============================================
-# DOCUMENT PROCESSING (PDF)
+# DOCUMENT PROCESSING (PDF) & REPORTING
 # ==============================================
 PyMuPDF==1.24.14
+reportlab>=4.0.0
 
 # ==============================================
 # CACHING & BACKGROUND TASKS

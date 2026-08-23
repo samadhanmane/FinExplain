@@ -27,10 +27,10 @@ const NAV_LINKS = [
 ];
 
 const STATS = [
-  { symbol: "#", value: 10, suffix: "+", label: "Document Formats Audited" },
-  { symbol: "%", value: 100, suffix: "%", label: "Claim-Level Citations" },
+  { symbol: "#", value: 25, suffix: "+", label: "Contract Queries Audited" },
+  { symbol: "%", value: 100, suffix: "%", label: "Faithfulness & Grounding" },
   { symbol: "*", value: 0, suffix: "", label: "Math Hallucinations" },
-  { symbol: "~", value: 32, suffix: "+", label: "Financial Risk Checks" },
+  { symbol: "~", value: 88.5, suffix: "%", label: "Covenant Preservation", decimals: 1 },
 ];
 
 const DOC_TYPES = [

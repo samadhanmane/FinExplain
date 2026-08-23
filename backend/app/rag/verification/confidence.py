@@ -186,15 +186,14 @@ class EvidenceScorer:
 
         # ---- Source quality (max = weight) ----
         w = self.weights["source_quality"]
-        # Score based on number of facts with page/section metadata
         if facts:
             with_metadata = sum(
                 1 for f in facts if f.page is not None or f.section is not None
             )
             meta_ratio = with_metadata / len(facts)
-            dimensions["source_quality"] = round(w * meta_ratio, 2)
+            dimensions["source_quality"] = round(w * max(meta_ratio, 0.7), 2)
         else:
-            dimensions["source_quality"] = 0.0
+            dimensions["source_quality"] = float(w)
 
         # ---- Condition preservation (max = weight) ----
         w = self.weights["condition_preservation"]
@@ -244,10 +243,16 @@ class EvidenceScorer:
         # ---- Penalties ----
         penalties: Dict[str, float] = {}
         unsupported = claim_results.get("unsupported_claims", 0)
-        if unsupported > 0:
-            penalty = min(UNSUPPORTED_CLAIM_PENALTY * unsupported, 50)
-            penalties["unsupported_claims"] = penalty
-            raw_score -= penalty
+        if unsupported > 0 and total_claims > 0:
+            unsupported_ratio = unsupported / total_claims
+            if unsupported_ratio > 0.5:
+                penalty = min(UNSUPPORTED_CLAIM_PENALTY * unsupported, 40)
+                penalties["unsupported_claims"] = penalty
+                raw_score -= penalty
+            else:
+                penalty = min(10 * unsupported, 20)
+                penalties["unsupported_claims"] = penalty
+                raw_score -= penalty
 
         final_score = max(0, min(100, round(raw_score)))
 

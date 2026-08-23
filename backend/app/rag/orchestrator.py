@@ -568,6 +568,23 @@ def process_query(
     missing_answer_elements = missing_answer_requirements(answer_text, query_requirements)
     if missing_answer_elements and tier != QueryTier.DEEP_RAG:
         logger.info(f"[CompletenessGate] Retrying answer for missing requirements: {missing_answer_elements}")
+        targeted_feedback = []
+        for req in missing_answer_elements:
+            req_name = req.replace("_", " ")
+            matching_cues = []
+            for chunk in reranked_chunks:
+                p_num = chunk.get("page_number") or chunk.get("page_num") or 1
+                c_text = chunk.get("text", "")
+                from app.rag.extraction.condition_detector import extract_categorized_conditions
+                c_cats = extract_categorized_conditions(c_text)
+                if c_cats:
+                    for cat_k, cat_vals in c_cats.items():
+                        matching_cues.append(f"{cat_k.replace('_', ' ')}: {', '.join(cat_vals[:3])} [Page {p_num}]")
+            cue_str = f"Ensure '{req_name}' is explicitly answered with all conditions and inline citations."
+            if matching_cues:
+                cue_str += f" Evidence signals: {'; '.join(matching_cues[:2])}."
+            targeted_feedback.append(cue_str)
+
         retry_result = generate_answer(
             clean_question,
             context,
@@ -577,7 +594,7 @@ def process_query(
             risk_factors=risk_factors if tier == QueryTier.DEEP_RAG else None,
             risk_score=risk_score_result if tier == QueryTier.DEEP_RAG else None,
             query_requirements=query_requirements,
-            completeness_feedback=missing_answer_elements,
+            completeness_feedback=targeted_feedback,
         )
         retry_answer = retry_result.get("answer", "")
         if retry_answer and not retry_answer.lower().startswith("error generating"):
@@ -733,6 +750,14 @@ def _build_response(
         hitl_required = True
         hitl_type = "RISK_ACCEPTANCE"
         hitl_reason = f"Document Risk Score is {risk_score_result.get('score')}/100 ({risk_score_result.get('level')}). High-risk clauses require explicit acknowledgment."
+    elif evidence_score_result.get("score", 100) < 70 and tier not in (QueryTier.FAST_FACTUAL, QueryTier.CALCULATION):
+        hitl_required = True
+        hitl_type = "CONDITIONAL_CONFIDENCE_REVIEW"
+        hitl_reason = (
+            f"Evidence score is {evidence_score_result.get('score')}/100 "
+            f"(below 70% HITL safety threshold for complex/conditional loan clauses). "
+            f"Queued for human expert review."
+        )
     elif evidence_score_result.get("score", 100) < 40:
         hitl_required = True
         hitl_type = "LOW_CONFIDENCE_AUDIT"
