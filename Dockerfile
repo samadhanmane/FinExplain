@@ -9,7 +9,7 @@ COPY frontend/ ./
 RUN npm run build
 
 # Stage 2: Backend runtime environment
-FROM python:3.10-slim AS backend-runtime
+FROM python:3.11-slim AS backend-runtime
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \

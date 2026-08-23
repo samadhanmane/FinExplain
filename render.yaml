@@ -7,13 +7,16 @@ services:
   # --------------------------------------------------------------------------
   - type: web
     name: finexplain-backend
-    runtime: docker
-    dockerfilePath: ./Dockerfile
-    plan: starter
+    runtime: python
+    buildCommand: "pip install --upgrade pip && pip install -r requirements.txt"
+    startCommand: "uvicorn app.main:app --host 0.0.0.0 --port $PORT --app-dir backend"
+    plan: free
     region: oregon
     healthCheckPath: /health/live
     autoDeploy: true
     envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
       - key: ENVIRONMENT
         value: production
       - key: LLM_PROVIDER
