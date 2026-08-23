@@ -215,18 +215,20 @@ export function getApiBaseUrl(): string {
   const isLocalHost = isBrowser && (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1");
   const envUrl = (import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL || "").trim();
 
-  // If deployed in production (e.g. on Vercel), reject any localhost base URLs
-  if (isBrowser && !isLocalHost && envUrl && (envUrl.includes("localhost") || envUrl.includes("127.0.0.1"))) {
-    console.warn("⚠️ [FinExplain] Localhost API URL ignored on deployed domain. Please set VITE_API_BASE_URL in your Vercel Project Settings.");
-    return "";
+  // In production (e.g. on Vercel), route directly to live Render backend
+  if (isBrowser && !isLocalHost) {
+    if (envUrl && !envUrl.includes("localhost") && !envUrl.includes("127.0.0.1")) {
+      return envUrl.replace(/\/+$/, "");
+    }
+    return "https://finexplain.onrender.com";
   }
 
+  // In local development
   if (envUrl) {
     return envUrl.replace(/\/+$/, "");
   }
 
-  // Default to relative path (empty string) to route through active host / reverse proxy
-  return "";
+  return "http://127.0.0.1:8000";
 }
 
 export function setApiBaseUrl(url: string): void {
