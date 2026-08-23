@@ -182,6 +182,7 @@ export function AuthPage() {
   const isGoogleConfigured = !!googleClientId && !googleClientId.includes("example");
 
   const triggerGoogleLogin = useGoogleLogin({
+    flow: "implicit",
     onSuccess: async (tokenResponse) => {
       setIsSubmitting(true);
       setError(null);

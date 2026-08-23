@@ -210,16 +210,34 @@ export interface AuthResponse {
 const STORAGE_API_KEY = "finexplain_api_base_url";
 const STORAGE_AUTH_TOKEN = "finexplain_auth_token";
 
+const DEFAULT_PROD_API_URL = "https://finexplain.onrender.com";
+
 export function getApiBaseUrl(): string {
-  if (typeof window !== "undefined") {
+  const isBrowser = typeof window !== "undefined";
+  const isLocalHost = isBrowser && (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1");
+
+  if (isBrowser) {
     const saved = localStorage.getItem(STORAGE_API_KEY);
-    if (saved) return saved.replace(/\/+$/, "");
+    if (saved) {
+      // If we are in production, discard old localhost overrides
+      if (!isLocalHost && (saved.includes("localhost") || saved.includes("127.0.0.1"))) {
+        localStorage.removeItem(STORAGE_API_KEY);
+      } else {
+        return saved.replace(/\/+$/, "");
+      }
+    }
   }
+
   const envUrl = import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL;
   if (envUrl) {
     return envUrl.replace(/\/+$/, "");
   }
-  return typeof window !== "undefined" ? window.location.origin : "";
+
+  if (isLocalHost) {
+    return "http://localhost:8000";
+  }
+
+  return DEFAULT_PROD_API_URL;
 }
 
 export function setApiBaseUrl(url: string): void {
