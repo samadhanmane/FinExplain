@@ -211,10 +211,20 @@ const STORAGE_API_KEY = "finexplain_api_base_url";
 const STORAGE_AUTH_TOKEN = "finexplain_auth_token";
 
 export function getApiBaseUrl(): string {
+  const isBrowser = typeof window !== "undefined";
+  const isLocalHost = isBrowser && (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1");
   const envUrl = (import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL || "").trim();
+
+  // If deployed in production (e.g. on Vercel), reject any localhost base URLs
+  if (isBrowser && !isLocalHost && envUrl && (envUrl.includes("localhost") || envUrl.includes("127.0.0.1"))) {
+    console.warn("⚠️ [FinExplain] Localhost API URL ignored on deployed domain. Please set VITE_API_BASE_URL in your Vercel Project Settings.");
+    return "";
+  }
+
   if (envUrl) {
     return envUrl.replace(/\/+$/, "");
   }
+
   // Default to relative path (empty string) to route through active host / reverse proxy
   return "";
 }
