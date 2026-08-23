@@ -14,7 +14,7 @@ Key Capabilities:
 import io
 import re
 from typing import List, Dict, Any, Optional
-import fitz  # PyMuPDF
+import pymupdf as fitz
 
 # Optional multi-format parsers
 try:

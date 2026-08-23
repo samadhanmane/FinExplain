@@ -23,7 +23,7 @@ psycopg2-binary>=2.9.9
 # ==============================================
 # VECTOR DATABASE (Pinecone)
 # ==============================================
-pinecone-client>=5.0.0
+pinecone>=5.0.0
 
 # ==============================================
 # EMBEDDINGS & RERANKING (PyTorch / SentenceTransformers)
