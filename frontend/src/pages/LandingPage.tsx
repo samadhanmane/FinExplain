@@ -788,7 +788,13 @@ export function LandingPage() {
             <span>— Evidence-first loan document intelligence.</span>
           </div>
 
-          <div className="flex items-center gap-6">
+          <div className="flex flex-wrap items-center gap-6">
+            <Link to="/privacy" className="hover:text-white transition-colors underline-offset-4 hover:underline">
+              Privacy Policy
+            </Link>
+            <Link to="/terms" className="hover:text-white transition-colors underline-offset-4 hover:underline">
+              Terms of Service
+            </Link>
             <a href="mailto:contact@finexplain.ai" className="hover:text-white transition-colors">
               contact@finexplain.ai
             </a>

@@ -637,6 +637,19 @@ export function AuthPage() {
                 )}
                 <span>{isSubmitting ? "Authenticating with Google..." : "Continue with Google"}</span>
               </button>
+
+              {/* Legal Terms & Privacy Disclaimer */}
+              <p className="text-[11px] text-center text-muted-foreground pt-1">
+                By continuing, you agree to our{" "}
+                <Link to="/terms" className="text-white hover:underline underline-offset-2">
+                  Terms of Service
+                </Link>{" "}
+                and{" "}
+                <Link to="/privacy" className="text-white hover:underline underline-offset-2">
+                  Privacy Policy
+                </Link>
+                .
+              </p>
             </>
           )}
         </div>
